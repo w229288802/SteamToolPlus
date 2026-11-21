@@ -11,7 +11,7 @@
     <!-- 左侧区域：Logo、程序名称和导航菜单 -->
     <div class="title-bar-left">
       <div class="logo">
-        <img class="logo-icon" src="/icon.png" alt="Steam Tool Plus" />
+        <img class="logo-icon" :src="logoUrl" alt="Steam Tool Plus" />
       </div>
       <!-- 导航菜单 - 使用 NavDropdown 组件复用重复结构 -->
       <nav class="title-bar-nav">
@@ -92,6 +92,7 @@
  */
 
 import { ref } from 'vue'
+import logoUrl from '@assets/logo.png'
 import { useWindowStore } from '../../store/window.store'
 import { useThemeStore } from '../../store/theme.store'
 import { useConfigStore } from '../../store/config.store'
