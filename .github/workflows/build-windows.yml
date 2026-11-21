@@ -1,0 +1,58 @@
+name: build-windows
+
+# 手动触发：Actions → build-windows → Run workflow
+on:
+  workflow_dispatch:
+  push:
+    branches: [master, main]
+    paths-ignore:
+      - '**.md'
+      - '.github/**'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          targets: x86_64-pc-windows-msvc
+
+      - name: Cache cargo
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: npm ci
+        run: npm ci --no-audit --no-fund
+
+      - name: Build (frontend + tauri, no bundle)
+        run: npm run tauri build -- --no-bundle
+
+      - name: Rename exe
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem src-tauri/target/release/*.exe | Where-Object { $_.Name -notmatch 'build-script' } | Select-Object -First 1
+          if (-not $exe) { throw 'no exe produced' }
+          Copy-Item $exe.FullName "SteamToolPlus.exe" -Force
+          Get-Item "SteamToolPlus.exe" | Select-Object Name, Length
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SteamToolPlus-windows-x64
+          path: SteamToolPlus.exe
+          if-no-files-found: error
+          retention-days: 30
